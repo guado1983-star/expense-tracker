@@ -1,0 +1,9 @@
+Carnote,550.00,Transportation,2023-10-22
+Rent,2500.00,Housing,2026-09-28
+Food,500.00,Groceries,2026-01-01
+Clothing,350.00,Clothes,2026-01-01
+Phone Bill,300.00,Communcation,2010-09-09
+Fun Money,1200.00,Fun Money,2026-01-01
+School,250.00,school,2026-01-01
+Laptop,1000.00,Tech,2026-05-28
+Test,150.00,Test,2026-01-01

@@ -1,0 +1,127 @@
+# DEVELOPER SETUP & PROJECT RULES
+# Expense Tracker — Python CLI
+# Last Updated: 2026-05-28
+
+# ==========================================
+# 1. PROJECT OVERVIEW
+# ==========================================
+
+Project: Expense Tracker CLI
+Language: Python 3
+Type: Command-line application
+Data Storage: Flat file (expenses.txt), CSV export (expenses_export.csv)
+IDE: Visual Studio Code
+
+# ==========================================
+# 2. FILE STRUCTURE
+# ==========================================
+
+project/
+├── expense_tracker.py     # Main application script
+├── expenses.txt           # Live data file (auto-generated, do not edit manually)
+├── expenses_export.csv    # CSV export (auto-generated on demand)
+└── context.txt            # This file
+
+# ==========================================
+# 3. PYTHON ENVIRONMENT
+# ==========================================
+
+- Use Python 3.8 or higher
+- No virtual environment required (stdlib only — os, datetime, csv)
+- No third-party packages or pip installs needed
+- Run script with: python expense_tracker.py
+- Do NOT run with the VS Code Run button — use the integrated terminal instead
+  (VS Code Run button swallows print() output for functions without input() calls)
+
+# ==========================================
+# 4. VS CODE SETUP
+# ==========================================
+
+- Always run the script from the VS Code integrated terminal, not the Play button
+- Open terminal with: Ctrl + ` (backtick) on Windows/Linux, Cmd + ` on Mac
+- Navigate to the project folder before running: cd path/to/project
+- Recommended extensions:
+    - Python (Microsoft)
+    - Pylance
+    - indent-rainbow (helps spot indentation bugs)
+
+# ==========================================
+# 5. DATA FILE RULES
+# ==========================================
+
+expenses.txt format — 4 fields, comma-separated, one record per line:
+    name,amount,category,date
+    Example: Coffee,4.50,Food,2025-01-15
+
+RULES:
+- Do NOT manually add extra commas — breaks the parser (expects exactly 4 fields)
+- Amount must be a valid float (e.g. 4.50, not "four fifty")
+- Date must be exactly YYYY-MM-DD format
+- Do NOT leave blank lines inside the file
+- Do NOT open expenses.txt while the script is running (file lock risk on Windows)
+- expenses.txt is auto-saved after every Add, Edit, and Delete operation
+
+# ==========================================
+# 6. CSV EXPORT RULES
+# ==========================================
+
+- Export file: expenses_export.csv
+- Encoding: UTF-8 with BOM (utf-8-sig) — required for clean Excel/Numbers import
+- newline="" parameter used — prevents double spacing in Excel on Windows
+- Do NOT use expenses_export.csv as a data source — it is output only
+- Re-export after any changes to get a fresh copy
+
+# ==========================================
+# 7. CODING RULES
+# ==========================================
+
+- All functions must accept `expenses` as a parameter — never use global variables
+- All user-facing output in display-only functions (show_*) must use input() not print()
+  REASON: VS Code terminal swallows print() output unless input() forces a flush
+- All input() calls must use .strip() to remove accidental whitespace
+- Date validation uses datetime.strptime(date, "%Y-%m-%d") — do not change format
+- Always call save_expenses() after any operation that modifies the expenses list
+- Error handling must be explicit — never let ValueError or KeyError crash the app
+
+# ==========================================
+# 8. ADDING NEW FEATURES
+# ==========================================
+
+CHECKLIST for adding a new menu option:
+1. Write the function above main()
+2. Add a print() line to the menu in main()
+3. Add an elif choice == "N" branch in main()
+4. If the function modifies expenses, call save_expenses(expenses) after it
+5. If the function only displays data, use input() at the end to prevent VS Code swallowing output
+6. Test with both valid and invalid inputs before committing
+
+# ==========================================
+# 9. KNOWN ISSUES & FIXES
+# ==========================================
+
+ISSUE: Options that only display data appear to do nothing in VS Code
+FIX: Use input("... Press Enter to continue...") instead of print() for display output
+REASON: VS Code's terminal buffer does not flush print() output in certain configurations
+         when there is no subsequent input() call in the function
+
+ISSUE: expenses.txt not found on startup
+FIX: Script uses os.path.abspath(__file__) to always resolve the file path
+     relative to the script location, not the terminal working directory
+
+ISSUE: Blank rows in CSV export when opened in Excel on Windows
+FIX: open() uses newline="" parameter — do not remove it
+
+# ==========================================
+# 10. MENU REFERENCE
+# ==========================================
+
+1. Add Expense        — prompts name, amount, category, date. Saves on success.
+2. Show All Expenses  — lists all records with index, name, amount, category, date
+3. Show Total         — sum of all expense amounts
+4. Show Total by Category — grouped sum per category
+5. Delete Expense     — select by number, removes and saves
+6. Search Expenses    — case-insensitive keyword search on expense name
+7. Show by Month      — grouped sum per YYYY-MM
+8. Edit Expense       — select by number, edit any field, keeps original on invalid input
+9. Exit               — saves and exits
+10. Export to CSV     — writes expenses_export.csv for Excel/Numbers
