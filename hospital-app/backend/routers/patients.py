@@ -9,14 +9,9 @@ from controllers import patient_controller
 router = APIRouter(prefix="/patients", tags=["patients"])
 
 
-def _require_not_patient(current_user: models.User):
-    if current_user.role == models.UserRole.patient:
-        raise HTTPException(status_code=403, detail="Patients cannot perform this action")
-
-
-def _require_write_access(current_user: models.User):
-    if current_user.role == models.UserRole.patient:
-        raise HTTPException(status_code=403, detail="Read-only access")
+def _require_admin_or_staff(current_user: models.User):
+    if current_user.role not in (models.UserRole.admin, models.UserRole.staff):
+        raise HTTPException(status_code=403, detail="Access denied")
 
 
 def _get_assigned_patient_user_ids(db, doctor_id: int):
@@ -50,7 +45,8 @@ def list_patients(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    _require_not_patient(current_user)
+    if current_user.role == models.UserRole.patient:
+        raise HTTPException(status_code=403, detail="Access denied")
     if current_user.role == models.UserRole.doctor:
         assigned_user_ids = _get_assigned_patient_user_ids(db, current_user.id)
         items = db.query(models.Patient).filter(
@@ -66,7 +62,7 @@ def create_patient(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    _require_write_access(current_user)
+    _require_admin_or_staff(current_user)
     return patient_controller.create(db, data)
 
 
@@ -76,7 +72,8 @@ def get_patient(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    _require_not_patient(current_user)
+    if current_user.role == models.UserRole.patient:
+        raise HTTPException(status_code=403, detail="Access denied")
     patient = patient_controller.get_by_id(db, patient_id)
     if current_user.role == models.UserRole.doctor:
         assigned = _get_assigned_patient_user_ids(db, current_user.id)
@@ -92,9 +89,10 @@ def update_patient(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    _require_write_access(current_user)
+    if current_user.role == models.UserRole.patient:
+        raise HTTPException(status_code=403, detail="Access denied")
+    patient = patient_controller.get_by_id(db, patient_id)
     if current_user.role == models.UserRole.doctor:
-        patient = patient_controller.get_by_id(db, patient_id)
         assigned = _get_assigned_patient_user_ids(db, current_user.id)
         if patient.user_id not in assigned:
             raise HTTPException(status_code=403, detail="Not your patient")
@@ -107,5 +105,5 @@ def delete_patient(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    _require_write_access(current_user)
+    _require_admin_or_staff(current_user)
     patient_controller.delete(db, patient_id)
