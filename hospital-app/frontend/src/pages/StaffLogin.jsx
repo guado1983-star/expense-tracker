@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-export default function Login() {
+export default function StaffLogin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,12 +16,12 @@ export default function Login() {
     setLoading(true)
     try {
       const me = await login(email, password)
-      if (me.role !== 'patient') {
+      if (me.role === 'patient') {
         logout()
-        setError('This portal is for patients only. Please use the Staff Portal.')
+        setError('This portal is for staff only. Please use the Patient Portal.')
         return
       }
-      navigate('/my-chart')
+      navigate('/')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -36,8 +36,8 @@ export default function Login() {
           <div className="login-brand">
             <span className="brand-icon-lg">+</span>
           </div>
-          <h1>HospitalTracker</h1>
-          <p>Sign in to your account</p>
+          <h1>Staff Portal</h1>
+          <p>Doctors, nurses &amp; administrators</p>
         </div>
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="alert alert-error">{error}</div>}
@@ -70,7 +70,7 @@ export default function Login() {
         </form>
 
         <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px' }}>
-          Are you a doctor or staff? <Link to="/staff-login">Staff Portal</Link>
+          Are you a patient? <Link to="/login">Patient Portal</Link>
         </p>
       </div>
     </div>

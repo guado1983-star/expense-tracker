@@ -13,6 +13,7 @@ import MyChart from './pages/MyChart'
 import Doctors from './pages/Doctors'
 import Appointments from './pages/Appointments'
 import Users from './pages/Users'
+import StaffLogin from './pages/StaffLogin'
 import ToastContainer from './components/Toast'
 
 function PrivateRoute({ children }) {
@@ -34,6 +35,7 @@ export default function App() {
         <ToastContainer />
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/staff-login" element={<PublicRoute><StaffLogin /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
           <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
