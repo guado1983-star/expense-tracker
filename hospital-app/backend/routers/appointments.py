@@ -70,8 +70,8 @@ def all_appointments(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    if current_user.role != models.UserRole.admin:
-        raise HTTPException(status_code=403, detail="Admin access required")
+    if current_user.role == models.UserRole.patient:
+        raise HTTPException(status_code=403, detail="Access denied")
     return db.query(models.Appointment).order_by(
         models.Appointment.date, models.Appointment.time_slot
     ).all()

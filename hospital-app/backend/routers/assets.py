@@ -10,8 +10,8 @@ router = APIRouter(prefix="/assets", tags=["assets"])
 
 
 def _require_admin(current_user: models.User):
-    if current_user.role != models.UserRole.admin:
-        raise HTTPException(status_code=403, detail="Admin access required")
+    if current_user.role not in (models.UserRole.admin, models.UserRole.staff, models.UserRole.doctor):
+        raise HTTPException(status_code=403, detail="Access denied")
 
 
 def _require_not_patient(current_user: models.User):
