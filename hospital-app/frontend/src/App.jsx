@@ -12,6 +12,7 @@ import Assets from './pages/Assets'
 import MyChart from './pages/MyChart'
 import Doctors from './pages/Doctors'
 import Appointments from './pages/Appointments'
+import Users from './pages/Users'
 import ToastContainer from './components/Toast'
 
 function PrivateRoute({ children }) {
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="my-chart" element={<MyChart />} />
             <Route path="doctors" element={<Doctors />} />
             <Route path="appointments" element={<Appointments />} />
+            <Route path="users" element={<Users />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

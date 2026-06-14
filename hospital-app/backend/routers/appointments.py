@@ -65,6 +65,18 @@ def my_appointments(
     raise HTTPException(status_code=403, detail="Admins use /appointments/all")
 
 
+@router.get("/all", response_model=List[schemas.AppointmentOut])
+def all_appointments(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role != models.UserRole.admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return db.query(models.Appointment).order_by(
+        models.Appointment.date, models.Appointment.time_slot
+    ).all()
+
+
 @router.put("/{appointment_id}", response_model=schemas.AppointmentOut)
 def update_appointment(
     appointment_id: int,

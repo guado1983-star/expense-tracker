@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 import models
 import schemas
@@ -9,6 +9,16 @@ from controllers import room_controller
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
 
+def _require_admin(current_user: models.User):
+    if current_user.role != models.UserRole.admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+
+def _require_not_patient(current_user: models.User):
+    if current_user.role == models.UserRole.patient:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+
 @router.get("/", response_model=schemas.PaginatedRooms)
 def list_rooms(
     page: int = Query(1, ge=1),
@@ -16,6 +26,7 @@ def list_rooms(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    _require_not_patient(current_user)
     return room_controller.get_all(db, page, limit)
 
 
@@ -25,6 +36,7 @@ def create_room(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    _require_admin(current_user)
     return room_controller.create(db, data)
 
 
@@ -34,6 +46,7 @@ def get_room(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    _require_not_patient(current_user)
     return room_controller.get_by_id(db, room_id)
 
 
@@ -44,6 +57,7 @@ def update_room(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    _require_admin(current_user)
     return room_controller.update(db, room_id, data)
 
 
@@ -53,4 +67,5 @@ def delete_room(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
+    _require_admin(current_user)
     room_controller.delete(db, room_id)

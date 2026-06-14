@@ -10,6 +10,7 @@ const allNavItems = [
   { to: '/my-chart', label: 'My Chart', icon: '📋', roles: ['patient'] },
   { to: '/doctors', label: 'Book Appointment', icon: '📅', roles: ['patient'] },
   { to: '/appointments', label: 'My Appointments', icon: '🗓', roles: ['patient'] },
+  { to: '/users', label: 'Users', icon: '👥', roles: ['admin'] },
 ]
 
 export default function Layout() {

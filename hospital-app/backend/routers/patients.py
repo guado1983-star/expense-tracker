@@ -15,8 +15,17 @@ def _require_not_patient(current_user: models.User):
 
 
 def _require_write_access(current_user: models.User):
-    if current_user.role in (models.UserRole.patient, models.UserRole.doctor):
+    if current_user.role == models.UserRole.patient:
         raise HTTPException(status_code=403, detail="Read-only access")
+
+
+def _get_assigned_patient_user_ids(db, doctor_id: int):
+    return {
+        row[0]
+        for row in db.query(models.Appointment.patient_id)
+        .filter(models.Appointment.doctor_id == doctor_id)
+        .all()
+    }
 
 
 @router.get("/me", response_model=schemas.PatientOut)
@@ -42,6 +51,12 @@ def list_patients(
     current_user: models.User = Depends(get_current_user)
 ):
     _require_not_patient(current_user)
+    if current_user.role == models.UserRole.doctor:
+        assigned_user_ids = _get_assigned_patient_user_ids(db, current_user.id)
+        items = db.query(models.Patient).filter(
+            models.Patient.user_id.in_(assigned_user_ids)
+        ).all()
+        return {"total": len(items), "page": 1, "pages": 1, "items": items}
     return patient_controller.get_all(db, page, limit, search, status)
 
 
@@ -62,7 +77,12 @@ def get_patient(
     current_user: models.User = Depends(get_current_user)
 ):
     _require_not_patient(current_user)
-    return patient_controller.get_by_id(db, patient_id)
+    patient = patient_controller.get_by_id(db, patient_id)
+    if current_user.role == models.UserRole.doctor:
+        assigned = _get_assigned_patient_user_ids(db, current_user.id)
+        if patient.user_id not in assigned:
+            raise HTTPException(status_code=403, detail="Not your patient")
+    return patient
 
 
 @router.put("/{patient_id}", response_model=schemas.PatientOut)
@@ -73,6 +93,11 @@ def update_patient(
     current_user: models.User = Depends(get_current_user)
 ):
     _require_write_access(current_user)
+    if current_user.role == models.UserRole.doctor:
+        patient = patient_controller.get_by_id(db, patient_id)
+        assigned = _get_assigned_patient_user_ids(db, current_user.id)
+        if patient.user_id not in assigned:
+            raise HTTPException(status_code=403, detail="Not your patient")
     return patient_controller.update(db, patient_id, data)
 
 
