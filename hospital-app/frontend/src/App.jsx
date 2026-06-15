@@ -14,6 +14,7 @@ import Doctors from './pages/Doctors'
 import Appointments from './pages/Appointments'
 import Users from './pages/Users'
 import StaffLogin from './pages/StaffLogin'
+import AuditLogs from './pages/AuditLogs'
 import ToastContainer from './components/Toast'
 
 function PrivateRoute({ children }) {
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="doctors" element={<Doctors />} />
             <Route path="appointments" element={<Appointments />} />
             <Route path="users" element={<Users />} />
+            <Route path="audit-logs" element={<AuditLogs />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -7,6 +7,7 @@ import schemas
 import auth as auth_utils
 from database import get_db
 from email_utils import send_reset_password_email
+from audit import log_action, actor
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -25,6 +26,7 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+    log_action(db, user, f"New {user.role.value} account registered: {user.email}")
     return user
 
 
@@ -41,6 +43,7 @@ def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
         data={"sub": user.email},
         expires_delta=timedelta(minutes=auth_utils.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
+    log_action(db, user, f"{actor(user)} logged in")
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -68,4 +71,5 @@ def reset_password(payload: schemas.ResetPasswordRequest, db: Session = Depends(
     user.hashed_password = auth_utils.hash_password(payload.new_password)
     user.reset_password_token = None
     db.commit()
+    log_action(db, user, f"{actor(user)} changed their password")
     return {"message": "Password updated successfully."}

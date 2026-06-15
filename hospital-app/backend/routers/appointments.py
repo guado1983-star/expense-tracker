@@ -5,6 +5,7 @@ import models
 import schemas
 from database import get_db
 from auth import get_current_user
+from audit import log_action, actor
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -44,6 +45,7 @@ def book_appointment(
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
+    log_action(db, current_user, f"{actor(current_user)} booked appointment with Doctor #{data.doctor_id} on {data.date} at {data.time_slot}")
     return appointment
 
 
@@ -97,4 +99,5 @@ def update_appointment(
     appt.status = data.status
     db.commit()
     db.refresh(appt)
+    log_action(db, current_user, f"{actor(current_user)} updated Appointment #{appointment_id} status to {data.status.value}")
     return appt

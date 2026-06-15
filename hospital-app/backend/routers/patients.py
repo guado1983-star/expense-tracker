@@ -5,6 +5,7 @@ import schemas
 from database import get_db
 from auth import get_current_user
 from controllers import patient_controller
+from audit import log_action, actor
 
 router = APIRouter(prefix="/patients", tags=["patients"])
 
@@ -33,6 +34,7 @@ def get_my_chart(
     patient = db.query(models.Patient).filter(models.Patient.user_id == current_user.id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="No chart found for this account")
+    log_action(db, current_user, f"{current_user.full_name} viewed their chart")
     return patient
 
 
@@ -63,7 +65,9 @@ def create_patient(
     current_user: models.User = Depends(get_current_user)
 ):
     _require_admin_or_staff(current_user)
-    return patient_controller.create(db, data)
+    patient = patient_controller.create(db, data)
+    log_action(db, current_user, f"{actor(current_user)} created Patient #{patient.id} ({patient.full_name})")
+    return patient
 
 
 @router.get("/{patient_id}", response_model=schemas.PatientOut)
@@ -79,6 +83,7 @@ def get_patient(
         assigned = _get_assigned_patient_user_ids(db, current_user.id)
         if patient.user_id not in assigned:
             raise HTTPException(status_code=403, detail="Not your patient")
+    log_action(db, current_user, f"{actor(current_user)} viewed Patient #{patient_id}")
     return patient
 
 
@@ -96,7 +101,9 @@ def update_patient(
         assigned = _get_assigned_patient_user_ids(db, current_user.id)
         if patient.user_id not in assigned:
             raise HTTPException(status_code=403, detail="Not your patient")
-    return patient_controller.update(db, patient_id, data)
+    updated = patient_controller.update(db, patient_id, data)
+    log_action(db, current_user, f"{actor(current_user)} updated Patient #{patient_id}")
+    return updated
 
 
 @router.delete("/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -107,3 +114,4 @@ def delete_patient(
 ):
     _require_admin_or_staff(current_user)
     patient_controller.delete(db, patient_id)
+    log_action(db, current_user, f"{actor(current_user)} deleted Patient #{patient_id}")

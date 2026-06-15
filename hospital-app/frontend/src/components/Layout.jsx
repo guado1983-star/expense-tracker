@@ -11,6 +11,7 @@ const allNavItems = [
   { to: '/doctors', label: 'Book Appointment', icon: '📅', roles: ['patient'] },
   { to: '/appointments', label: 'My Appointments', icon: '🗓', roles: ['patient'] },
   { to: '/users', label: 'Users', icon: '👥', roles: ['admin'] },
+  { to: '/audit-logs', label: 'Audit Log', icon: '📋', roles: ['admin'] },
 ]
 
 export default function Layout() {

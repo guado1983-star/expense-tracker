@@ -5,6 +5,7 @@ import models
 import schemas
 from database import get_db
 from auth import get_current_user
+from audit import log_action, actor
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -14,12 +15,22 @@ def _require_admin(current_user: models.User):
         raise HTTPException(status_code=403, detail="Admin access required")
 
 
+@router.get("/audit-logs", response_model=List[schemas.AuditLogOut])
+def get_audit_logs(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    _require_admin(current_user)
+    return db.query(models.AuditLog).order_by(models.AuditLog.timestamp.desc()).limit(500).all()
+
+
 @router.get("/users", response_model=List[schemas.UserOut])
 def list_users(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     _require_admin(current_user)
+    log_action(db, current_user, f"{actor(current_user)} viewed user list")
     return db.query(models.User).order_by(models.User.created_at).all()
 
 
@@ -41,6 +52,7 @@ def update_user_role(
     user.role = data.role
     db.commit()
     db.refresh(user)
+    log_action(db, current_user, f"{actor(current_user)} changed {user.full_name}'s role to {data.role.value}")
     return user
 
 
@@ -58,8 +70,11 @@ def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    deleted_name = user.full_name
+    deleted_email = user.email
     db.delete(user)
     db.commit()
+    log_action(db, current_user, f"{actor(current_user)} deleted user {deleted_name} ({deleted_email})")
 
 
 @router.get("/reports")

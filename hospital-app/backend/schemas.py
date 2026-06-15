@@ -183,6 +183,18 @@ class AppointmentOut(BaseModel):
         from_attributes = True
 
 
+# --- Audit Logs ---
+class AuditLogOut(BaseModel):
+    id: int
+    timestamp: datetime
+    user_name: str
+    role: str
+    detail: str
+
+    class Config:
+        from_attributes = True
+
+
 # --- Paginated Responses ---
 class PaginatedPatients(BaseModel):
     total: int
