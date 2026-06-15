@@ -14,6 +14,7 @@ import Doctors from './pages/Doctors'
 import Appointments from './pages/Appointments'
 import Users from './pages/Users'
 import StaffLogin from './pages/StaffLogin'
+import AdminLogin from './pages/AdminLogin'
 import AuditLogs from './pages/AuditLogs'
 import ToastContainer from './components/Toast'
 
@@ -37,6 +38,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/staff-login" element={<PublicRoute><StaffLogin /></PublicRoute>} />
+          <Route path="/admin-login" element={<PublicRoute><AdminLogin /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
           <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />

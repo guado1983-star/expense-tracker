@@ -69,9 +69,11 @@ export default function Login() {
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px' }}>
-          Are you a doctor or staff? <Link to="/staff-login">Staff Portal</Link>
-        </p>
+        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <p>New here? <Link to="/register">Create an account</Link></p>
+          <p>Doctor or Staff? <Link to="/staff-login">Staff Portal</Link></p>
+          <p>Administrator? <Link to="/admin-login">Admin Portal</Link></p>
+        </div>
       </div>
     </div>
   )
