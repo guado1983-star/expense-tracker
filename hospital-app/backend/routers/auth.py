@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import datetime, timedelta
 import secrets
 import models
 import schemas
@@ -30,20 +30,45 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     return user
 
 
+MAX_ATTEMPTS = 5
+LOCKOUT_MINUTES = 15
+
 @router.post("/login", response_model=schemas.Token)
 def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = auth_utils.authenticate_user(db, credentials.email, credentials.password)
-    if not user:
+    user = auth_utils.get_user_by_email(db, credentials.email)
+
+    if user and user.locked_until and user.locked_until > datetime.utcnow():
+        remaining = max(1, int((user.locked_until - datetime.utcnow()).total_seconds() / 60) + 1)
+        raise HTTPException(status_code=423, detail=f"Account locked. Try again in {remaining} minute(s).")
+
+    authenticated = auth_utils.authenticate_user(db, credentials.email, credentials.password)
+
+    if not authenticated:
+        if user:
+            user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+            if user.failed_login_attempts >= MAX_ATTEMPTS:
+                user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
+                db.commit()
+                log_action(db, user, f"{actor(user)} account locked after {MAX_ATTEMPTS} failed attempts")
+                raise HTTPException(status_code=423, detail=f"Account locked for {LOCKOUT_MINUTES} minutes after {MAX_ATTEMPTS} failed attempts.")
+            db.commit()
+            log_action(db, user, f"Failed login attempt {user.failed_login_attempts}/{MAX_ATTEMPTS} for {user.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    authenticated.failed_login_attempts = 0
+    authenticated.locked_until = None
+    authenticated.last_login = datetime.utcnow()
+    db.commit()
+
     token = auth_utils.create_access_token(
-        data={"sub": user.email},
+        data={"sub": authenticated.email},
         expires_delta=timedelta(minutes=auth_utils.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    log_action(db, user, f"{actor(user)} logged in")
+    log_action(db, authenticated, f"{actor(authenticated)} logged in")
     return {"access_token": token, "token_type": "bearer"}
 
 

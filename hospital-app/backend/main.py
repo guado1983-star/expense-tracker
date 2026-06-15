@@ -1,11 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 from database import engine, SessionLocal
 import models
 import auth as auth_utils
 from routers import auth, patients, rooms, assets, doctors, appointments, admin
 
 models.Base.metadata.create_all(bind=engine)
+
+# Add new columns to existing DB without losing data
+with engine.connect() as conn:
+    existing = [c['name'] for c in inspect(engine).get_columns('users')]
+    for col, definition in [
+        ('failed_login_attempts', 'INTEGER DEFAULT 0 NOT NULL'),
+        ('locked_until',          'DATETIME'),
+        ('last_login',            'DATETIME'),
+    ]:
+        if col not in existing:
+            conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {definition}"))
+    conn.commit()
 
 app = FastAPI(
     title="Hospital Patient & Asset Tracker",
